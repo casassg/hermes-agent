@@ -1,0 +1,2 @@
+*.json
+!machine_config.json

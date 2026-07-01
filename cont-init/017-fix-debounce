@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ -f /opt/data/config.yaml ] && ! grep -q 'text_batch_delay_seconds' /opt/data/config.yaml; then
+    printf '  platforms:\n    whatsapp:\n      extra:\n        text_batch_delay_seconds: 5.0\n        text_batch_split_delay_seconds: 10.0\n' > /tmp/debounce.txt
+    sed -i '/^gateway:/r /tmp/debounce.txt' /opt/data/config.yaml
+    rm -f /tmp/debounce.txt
+fi

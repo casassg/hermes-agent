@@ -1,0 +1,11 @@
+app = "evander"
+primary_region = "iad"
+machine_config = "machine_config.json"
+
+[[mounts]]
+  source = "data"
+  destination = "/opt/data"
+
+[[vm]]
+  memory = "4gb"
+  cpus = 2

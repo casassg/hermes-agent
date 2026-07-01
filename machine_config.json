@@ -1,0 +1,9 @@
+{
+      "containers": [
+        {
+          "name": "hermes",
+          "image": "nousresearch/hermes-agent:latest",
+          "cmd": ["gateway", "run"]
+        }
+      ]
+    }
