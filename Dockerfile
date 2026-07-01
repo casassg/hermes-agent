@@ -3,6 +3,15 @@ FROM nousresearch/hermes-agent:latest
 # Install tools/MCP/etc
 RUN npm install -g @googleworkspace/cli
 
+# GitHub CLI for repo access from the agent
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+      -o /usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+      > /etc/apt/sources.list.d/github-cli.list && \
+    apt-get update && apt-get install gh -y && \
+    rm -rf /var/lib/apt/lists/*
+
 # Pre-install WhatsApp bridge deps at build time. The bridge dir is
 # read-only (555, root:root) in the base image and the `hermes whatsapp`
 # wizard runs as uid 10000 (hermes), so a runtime `npm install` fails
