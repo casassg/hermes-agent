@@ -5,16 +5,16 @@ Deployment repo for a Hermes Agent instance running on Fly Machines. No applicat
 ## Deploy
 
 ```bash
-./bin/flyctl deploy --build-only && sleep 30 && ./bin/flyctl deploy
+./scripts/deploy.sh
 ```
 
-Two-step is required: `--build-only` pushes the image, then the 30s wait lets the Fly registry propagate before the machine update. A single `fly deploy` fails with `MANIFEST_UNKNOWN` due to registry propagation race.
+Two-step wrapper: `flyctl deploy --build-only && sleep 30 && flyctl deploy`. The build-only step pushes the image, then the 30s wait lets the Fly registry propagate before the machine update. A single `fly deploy` fails with `MANIFEST_UNKNOWN` due to registry propagation race. If the second step still fails with `MANIFEST_UNKNOWN`, wait a bit and re-run `./bin/flyctl deploy` (the image is already pushed).
 
 `flyctl` is managed by Hermit (`./bin/flyctl`). Don't install a system-level flyctl.
 
 ## Architecture
 
-- `Dockerfile` — derived from `nousresearch/hermes-agent:latest`; adds `gh`, `gws` CLI, WhatsApp bridge deps, and cont-init scripts.
+- `Dockerfile` — derived from `nousresearch/hermes-agent:latest`; adds `gh`, `gws` CLI, Hermit, WhatsApp bridge deps, and cont-init scripts.
 - `fly.toml` — no `[build] image` (removed so Fly builds from the Dockerfile instead of pulling the stock image).
 - `machine_config.json` — **required**. Hermes uses s6-overlay as PID 1; `s6-overlay-suexec` checks `getpid() == 1` and aborts without the container namespace that `machine_config` provides. Never remove this file.
 - `cont-init/` — s6 init scripts copied into `/etc/cont-init.d/`. Run as root before the gateway starts.
@@ -52,11 +52,15 @@ The `hermes` binary drops to uid 10000 (`hermes`) via `s6-setuidgid`. Root-only 
 - `016-fix-soul-perms` — `chmod 644 /opt/data/SOUL.md`. The base image seeds SOUL.md via `cp` without a subsequent chmod; a restrictive s6 umask leaves it 444 (read-only), which blocks `save_env_value` → `/sethome` fails with `PermissionError`.
 - `017-fix-debounce` — ensures WhatsApp message batching (`text_batch_delay_seconds: 5.0`) is in `config.yaml` under `gateway.platforms.whatsapp.extra`.
 - `018-gws-credentials` — writes `GOOGLE_WORKSPACE_CLI_CREDENTIALS_JSON` env var to `/opt/data/.gws/service-account.json`. Currently non-functional because Fly secrets don't reach the container (see above). Write the JSON file manually instead.
+- `019-hermit-state` — `mkdir -p /opt/data/.hermit` (chowned to hermes) so Hermit's runtime package state lives on the persistent volume.
+- `020-gh-config` — `mkdir -p /opt/data/.gh` (chowned to hermes) so `gh auth login` credentials persist. Paired with `GH_CONFIG_DIR=/opt/data/.gh` ENV in the Dockerfile.
 
 ## Key paths inside the container
 
 - `/opt/hermes/` — immutable install tree (root-owned, read-only to hermes user).
+- `/opt/hermit/` — Hermit binary (baked at build time, root-owned). `HERMIT_EXE=/opt/hermit/pkg/hermit@stable/hermit`.
 - `/opt/data/` — persistent volume (hermes-owned, writable). `HERMES_HOME=/opt/data`.
+- `/opt/data/.hermit/` — Hermit runtime state dir (`HERMIT_STATE_DIR`). Package installs land here and persist across restarts.
 - `/opt/hermes/scripts/whatsapp-bridge/` — WhatsApp bridge code. Pre-installed deps in the Dockerfile (base image has 555 perms on this dir).
 - `/opt/data/.env` — API keys and secrets. The gateway reads this and sets env vars for subprocesses.
 - `/opt/data/config.yaml` — Hermes config (gateway, platforms, debounce, etc.).

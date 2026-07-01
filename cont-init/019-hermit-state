@@ -1,0 +1,5 @@
+#!/bin/sh
+# Ensure Hermit's runtime state dir (package installs) exists and is owned by
+# hermes, so `hermit install` works at runtime and survives restarts.
+mkdir -p /opt/data/.hermit
+chown hermes:hermes /opt/data/.hermit 2>/dev/null || true

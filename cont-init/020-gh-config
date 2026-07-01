@@ -1,0 +1,5 @@
+#!/bin/sh
+# Ensure gh CLI config dir exists and is owned by hermes so `gh auth login`
+# persists credentials on the volume (GH_CONFIG_DIR=/opt/data/.gh).
+mkdir -p /opt/data/.gh
+chown hermes:hermes /opt/data/.gh 2>/dev/null || true
