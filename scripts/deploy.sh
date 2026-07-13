@@ -6,5 +6,5 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 ./bin/flyctl deploy --build-only
-sleep 30
+sleep 120
 ./bin/flyctl deploy
