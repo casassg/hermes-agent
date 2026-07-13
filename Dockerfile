@@ -1,15 +1,15 @@
+# syntax=docker/dockerfile:1.7
 FROM nousresearch/hermes-agent:latest
 
 # Install tools/MCP/etc
-RUN npm install -g @googleworkspace/cli
-
-# GitHub CLI for repo access from the agent
-RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+RUN npm install -g --no-fund --no-audit @googleworkspace/cli && \
+    npm cache clean --force && \
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
       -o /usr/share/keyrings/githubcli-archive-keyring.gpg && \
     chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
       > /etc/apt/sources.list.d/github-cli.list && \
-    apt-get update && apt-get install gh -y && \
+    apt-get update && apt-get install -y --no-install-recommends gh && \
     rm -rf /var/lib/apt/lists/*
 
 # Hermit: self-bootstrapping tool manager. Pre-bootstrap the binary at build
@@ -32,16 +32,11 @@ ENV GH_CONFIG_DIR=/opt/data/.gh
 # wizard runs as uid 10000 (hermes), so a runtime `npm install` fails
 # with EACCES on /opt/hermes/scripts/whatsapp-bridge/node_modules.
 RUN chmod 755 /opt/hermes/scripts/whatsapp-bridge && \
-    cd /opt/hermes/scripts/whatsapp-bridge && npm install && \
+    cd /opt/hermes/scripts/whatsapp-bridge && \
+    npm install --omit=dev --no-fund --no-audit && \
+    npm cache clean --force && \
     chown -R hermes:hermes /opt/hermes/scripts/whatsapp-bridge
 
 # cont-init scripts run as root before the gateway starts.
-# 016: fix SOUL.md perms — stage2-hook.sh seeds it via `cp` without a
-#   subsequent chmod, so a restrictive s6 umask (333) leaves it read-only
-#   (444). ensure_hermes_home() then tries to rewrite it on every
-#   save_env_value call → PermissionError, which blocks /sethome.
-# 017: ensure WhatsApp message debouncing is configured in config.yaml.
-# 018: write GWS service account JSON (from Fly secret) to the volume.
-COPY cont-init/ /etc/cont-init.d/
-RUN chmod 755 /etc/cont-init.d/*
-
+# COPY --chmod=755 sets permissions at copy time, avoiding a separate RUN layer.
+COPY --chmod=755 cont-init/ /etc/cont-init.d/

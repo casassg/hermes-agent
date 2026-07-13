@@ -1,4 +1,4 @@
-# Evander — Hermes Agent on Fly.io
+# Hermes Agent on Fly.io
 
 Deployment repo for a Hermes Agent instance running on Fly Machines. No application code — just infrastructure config and a derived Dockerfile.
 
@@ -49,6 +49,7 @@ The `hermes` binary drops to uid 10000 (`hermes`) via `s6-setuidgid`. Root-only 
 
 ## cont-init scripts
 
+- `015-chown-data` — `chown -R hermes:hermes /opt/data`. A fresh Fly volume mount is root-owned, which blocks hermit and other hermes-user processes from writing state. Runs before all other cont-init scripts.
 - `016-fix-soul-perms` — `chmod 644 /opt/data/SOUL.md`. The base image seeds SOUL.md via `cp` without a subsequent chmod; a restrictive s6 umask leaves it 444 (read-only), which blocks `save_env_value` → `/sethome` fails with `PermissionError`.
 - `017-fix-debounce` — ensures WhatsApp message batching (`text_batch_delay_seconds: 5.0`) is in `config.yaml` under `gateway.platforms.whatsapp.extra`.
 - `018-gws-credentials` — writes `GOOGLE_WORKSPACE_CLI_CREDENTIALS_JSON` env var to `/opt/data/.gws/service-account.json`. Currently non-functional because Fly secrets don't reach the container (see above). Write the JSON file manually instead.

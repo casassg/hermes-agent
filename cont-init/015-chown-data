@@ -1,0 +1,5 @@
+#!/bin/sh
+# Ensure the entire persistent volume is owned by hermes. A fresh Fly
+# volume mount is root-owned, which blocks hermit and other hermes-user
+# processes from writing state. Run before all other cont-init scripts.
+chown -R hermes:hermes /opt/data 2>/dev/null || true
