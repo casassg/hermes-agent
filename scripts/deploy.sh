@@ -6,5 +6,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 ./bin/flyctl deploy --build-only
+echo "Waiting for 120 seconds..."
 sleep 120
 ./bin/flyctl deploy
