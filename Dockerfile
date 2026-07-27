@@ -22,6 +22,12 @@ RUN npm install -g --no-fund --no-audit @googleworkspace/cli && \
 RUN curl -fsSL https://github.com/cashapp/hermit/releases/download/stable/install.sh \
       | HERMIT_STATE_DIR=/opt/hermit HERMIT_BIN_INSTALL_DIR=/usr/local/bin bash
 ENV HERMIT_STATE_DIR=/opt/data/.hermit
+# uv/uvx: keep cache, tool venvs, and managed Pythons on the persistent
+# volume so `uvx <tool>` installs survive machine restarts. 021-uv-state
+# ensures these dirs exist and are owned by hermes.
+ENV UV_CACHE_DIR=/opt/data/.uv/cache
+ENV UV_TOOL_DIR=/opt/data/.uv/tools
+ENV UV_PYTHON_INSTALL_DIR=/opt/data/.uv/python
 
 # gh CLI: store credentials on the persistent volume so `gh auth login`
 # survives restarts. Default (~/.config/gh) is in the ephemeral home dir.
