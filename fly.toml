@@ -5,6 +5,10 @@ machine_config = "machine_config.json"
 [[mounts]]
   source = "data"
   destination = "/opt/data"
+  auto_extend_size_threshold = 80
+  auto_extend_size_increment = "1GB"
+  auto_extend_size_limit = "10GB"
+  scheduled_snapshots = false
 
 [[vm]]
   memory = "4gb"
