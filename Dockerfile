@@ -9,7 +9,7 @@ RUN npm install -g --no-fund --no-audit @googleworkspace/cli && \
     chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
       > /etc/apt/sources.list.d/github-cli.list && \
-    apt-get update && apt-get install -y --no-install-recommends gh && \
+    apt-get update && apt-get install -y --no-install-recommends gh vim && \
     rm -rf /var/lib/apt/lists/*
 
 # Hermit: self-bootstrapping tool manager. Pre-bootstrap the binary at build
@@ -22,6 +22,7 @@ RUN npm install -g --no-fund --no-audit @googleworkspace/cli && \
 RUN curl -fsSL https://github.com/cashapp/hermit/releases/download/stable/install.sh \
       | HERMIT_STATE_DIR=/opt/hermit HERMIT_BIN_INSTALL_DIR=/usr/local/bin bash
 ENV HERMIT_STATE_DIR=/opt/data/.hermit
+
 # uv/uvx: keep cache, tool venvs, and managed Pythons on the persistent
 # volume so `uvx <tool>` installs survive machine restarts. 021-uv-state
 # ensures these dirs exist and are owned by hermes.
