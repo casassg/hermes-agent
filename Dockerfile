@@ -11,6 +11,7 @@ RUN npm install -g --no-fund --no-audit @googleworkspace/cli && \
       > /etc/apt/sources.list.d/github-cli.list && \
     apt-get update && apt-get install -y --no-install-recommends gh vim && \
     rm -rf /var/lib/apt/lists/*
+    
 
 # Hermit: self-bootstrapping tool manager. Pre-bootstrap the binary at build
 # time into /opt/hermit (baked in the image, NOT under /opt/data which is
@@ -47,3 +48,13 @@ RUN chmod 755 /opt/hermes/scripts/whatsapp-bridge && \
 # cont-init scripts run as root before the gateway starts.
 # COPY --chmod=755 sets permissions at copy time, avoiding a separate RUN layer.
 COPY --chmod=755 cont-init/ /etc/cont-init.d/
+
+#my local timezone
+ENV TZ=America/Chicago
+
+# Install tzdata and configure the symlink non-interactively
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone && \
+    rm -rf /var/lib/apt/lists/*
